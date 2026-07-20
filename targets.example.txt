@@ -1,0 +1,18 @@
+# Sample target list for: ntptool scan --file targets.example.txt
+#
+# One target per line (or several space-separated on one line).
+# Blank lines and lines starting with '#' are ignored.
+# Accepts hostnames, IPv4/IPv6 addresses and IPv4 CIDR ranges.
+
+# Public pools / well-known servers
+pool.ntp.org
+time.google.com
+time.cloudflare.com
+time.windows.com
+
+# Individual hosts
+0.pool.ntp.org
+1.pool.ntp.org
+
+# A small subnet (expands to every address in the range)
+# 192.0.2.0/29
