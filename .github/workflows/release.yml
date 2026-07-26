@@ -1,0 +1,154 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Allows a test build without a tag (builds only, publishes nothing).
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    # Linux builds run inside an Ubuntu 22.04 container so the glibc baseline of
+    # the released binaries (2.35) stays fixed and independent of which runner
+    # images GitHub retires. Other platforms build directly on the runner.
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-24.04
+            container: ubuntu:22.04
+          - name: linux-aarch64
+            os: ubuntu-24.04-arm
+            container: ubuntu:22.04
+          - name: macos-arm64
+            os: macos-15
+          # Last Intel macOS image on Actions (available until Aug 2027)
+          - name: macos-x86_64
+            os: macos-15-intel
+          - name: windows-x86_64
+            os: windows-2022
+
+    steps:
+      - name: Install build tools (container only)
+        if: matrix.container != ''
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates g++ cmake make git tar gzip
+
+      - uses: actions/checkout@v7
+
+      - name: Determine version
+        id: vars
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="0.0.0-dev+${GITHUB_SHA::7}"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "pkg=ntptool-${version}-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag version against CMakeLists
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          project_version=$(grep -m1 -oE 'VERSION[[:space:]]+[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          tag_version="${{ steps.vars.outputs.version }}"
+          if [[ "${project_version}" != "${tag_version%%-*}" ]]; then
+            echo "::warning::Tag ${tag_version} does not match project(VERSION ${project_version}) in CMakeLists.txt"
+          fi
+
+      - name: Configure
+        shell: bash
+        run: |
+          extra=()
+          if [[ "${RUNNER_OS}" == "Linux" ]]; then
+            # Ship a binary that does not depend on the runner's libstdc++/libgcc
+            extra+=(-DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc")
+          fi
+          # Deliberately without -Werror: a release must not fail over a warning.
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release "${extra[@]}"
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release -j 4
+
+      - name: Install into dist/
+        shell: bash
+        run: cmake --install build --config Release --prefix "${PWD}/dist"
+
+      - name: Selftest
+        shell: bash
+        run: ./dist/bin/ntptool selftest
+
+      - name: Package
+        id: package
+        shell: bash
+        run: |
+          pkg="${{ steps.vars.outputs.pkg }}"
+          mkdir -p "staging/${pkg}"
+          cp -r dist/bin/. "staging/${pkg}/"
+          cp README.md LICENSE targets.example.txt "staging/${pkg}/"
+          mkdir -p artifacts
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            (cd staging && 7z a -tzip "../artifacts/${pkg}.zip" "${pkg}") > /dev/null
+            asset="${pkg}.zip"
+          else
+            tar -C staging -czf "artifacts/${pkg}.tar.gz" "${pkg}"
+            asset="${pkg}.tar.gz"
+          fi
+          (cd artifacts && shasum -a 256 "${asset}" > "${asset}.sha256" 2>/dev/null \
+            || sha256sum "${asset}" > "${asset}.sha256")
+          echo "asset=${asset}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.vars.outputs.pkg }}
+          path: artifacts/*
+          if-no-files-found: error
+
+  draft-release:
+    name: Create draft release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Collect checksums
+        run: |
+          cd artifacts
+          cat *.sha256 > SHA256SUMS.txt
+          rm -f *.sha256
+          ls -la
+
+      - name: Create or update draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" artifacts/* --clobber
+          else
+            gh release create "$tag" artifacts/* \
+              --draft \
+              --title "ntptool $tag" \
+              --generate-notes
+          fi
