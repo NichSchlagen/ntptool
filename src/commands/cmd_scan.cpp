@@ -58,14 +58,18 @@ bool expand_target(const std::string& tok, std::vector<std::string>& out,
     std::string base = tok.substr(0, slash);
     std::string plen = tok.substr(slash + 1);
     uint32_t ip;
-    long prefix;
+    long prefix = 0;
     if (!parse_ipv4(base, ip)) {
         err = "CIDR base is not an IPv4 address: " + base;
         return false;
     }
+    size_t used = 0;
     try {
-        prefix = std::stol(plen);
+        prefix = std::stol(plen, &used, 10);
     } catch (...) {
+        used = 0;
+    }
+    if (used == 0 || used != plen.size()) {
         err = "invalid CIDR prefix: " + plen;
         return false;
     }
