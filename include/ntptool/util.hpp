@@ -63,6 +63,9 @@ std::string format_seconds_adaptive(double seconds);
 // Format a signed offset in milliseconds with an explicit sign.
 std::string format_ms_signed(double seconds);
 
+// Seconds as milliseconds with three decimals, no unit ("12.345").
+std::string ms3(double seconds);
+
 // Format a UNIX timestamp (seconds since 1970, may carry a fraction) as an
 // ISO-8601 UTC string.
 std::string format_unix_utc(double unix_seconds, bool with_fraction = true);

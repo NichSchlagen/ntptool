@@ -10,12 +10,6 @@
 namespace ntptool {
 namespace {
 
-std::string ms3(double seconds) {
-    char buf[32];
-    std::snprintf(buf, sizeof(buf), "%.3f", seconds * 1e3);
-    return buf;
-}
-
 void print_summary_line(std::ostream& os, const std::string& label,
                         const StatSummary& s, const Colorizer& c) {
     std::ostringstream v;

@@ -24,12 +24,6 @@ std::string now_hms() {
     return buf;
 }
 
-std::string ms3(double s) {
-    char b[32];
-    std::snprintf(b, sizeof(b), "%.3f", s * 1e3);
-    return b;
-}
-
 }  // namespace
 
 int cmd_monitor(const Options& opt) {

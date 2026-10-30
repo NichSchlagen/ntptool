@@ -25,12 +25,6 @@ struct Hop {
     std::string note;
 };
 
-bool looks_like_ipv4(const std::string& s) {
-    unsigned a, b, c, d;
-    char extra;
-    return std::sscanf(s.c_str(), "%u.%u.%u.%u%c", &a, &b, &c, &d, &extra) == 4;
-}
-
 }  // namespace
 
 int cmd_trace(const Options& opt) {
@@ -95,7 +89,7 @@ int cmd_trace(const Options& opt) {
         // For stratum >= 2 the reference id is the upstream server's IPv4
         // address (only meaningful for IPv4 associations).
         std::string next = r.response.refid_string();
-        if (!looks_like_ipv4(next) || next == "0.0.0.0") {
+        if (r.response.reference_id == 0) {
             hops.back().note =
                 "upstream not an IPv4 refid (" + next + "); cannot follow";
             break;

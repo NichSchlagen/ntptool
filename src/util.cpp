@@ -106,6 +106,12 @@ std::string format_ms_signed(double seconds) {
     return buf;
 }
 
+std::string ms3(double seconds) {
+    char buf[32];
+    std::snprintf(buf, sizeof(buf), "%.3f", seconds * 1e3);
+    return buf;
+}
+
 std::string format_unix_utc(double unix_seconds, bool with_fraction) {
     // Split into integer seconds and fractional part.
     double intpart = std::floor(unix_seconds);

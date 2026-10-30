@@ -28,13 +28,6 @@ struct HostSummary {
     std::string note;
 };
 
-double median_of(std::vector<double> v) {
-    if (v.empty()) return 0.0;
-    std::sort(v.begin(), v.end());
-    size_t m = v.size() / 2;
-    return (v.size() % 2 == 0) ? (v[m - 1] + v[m]) / 2.0 : v[m];
-}
-
 }  // namespace
 
 int cmd_compare(const Options& opt) {
@@ -100,10 +93,10 @@ int cmd_compare(const Options& opt) {
                        ? 0 : 1;
 
     // Consensus: group median of reachable per-host offsets.
-    std::vector<double> offs;
+    Series offs;
     for (const auto& r : rows)
-        if (r.reachable) offs.push_back(r.offset);
-    double consensus = median_of(offs);
+        if (r.reachable) offs.add(r.offset);
+    double consensus = offs.summary().median;
 
     for (auto& r : rows) {
         if (r.reachable && std::fabs(r.offset - consensus) > kOutlierThreshold) {
