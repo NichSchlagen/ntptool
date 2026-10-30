@@ -53,6 +53,8 @@ set(NTPTOOL_SOURCES
 add_executable(ntptool ${NTPTOOL_SOURCES})
 
 target_include_directories(ntptool PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+# Single source of the version: project(VERSION), which CI checks against the tag.
+target_compile_definitions(ntptool PRIVATE NTPTOOL_VERSION="${PROJECT_VERSION}")
 
 # ---------------------------------------------------------------------------
 # Threads

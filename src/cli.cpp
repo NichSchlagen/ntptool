@@ -3,7 +3,6 @@
 #include <cstdlib>
 
 #include "ntptool/util.hpp"
-#include "ntptool/version.hpp"
 
 namespace ntptool {
 namespace {
@@ -250,7 +249,7 @@ QueryConfig make_query_config(const Options& opt) {
 // ---------------------------------------------------------------------------
 
 void print_version(std::ostream& os) {
-    os << NTPTOOL_NAME << " " << NTPTOOL_VERSION
+    os << "ntptool " << NTPTOOL_VERSION
        << " — comprehensive NTP server testing toolkit\n";
 }
 
