@@ -231,7 +231,17 @@ QueryConfig make_query_config(const Options& opt) {
     cfg.capture_raw = opt.verbose >= 2;
     cfg.auth.type = opt.auth_type;
     cfg.auth.key_id = opt.key_id;
-    cfg.auth.key.assign(opt.key.begin(), opt.key.end());
+    // Like ntpd's keys file: more than 20 characters means a hex-encoded key.
+    bool hex = opt.key.size() > 20 && opt.key.size() % 2 == 0 &&
+               opt.key.find_first_not_of("0123456789abcdefABCDEF") ==
+                   std::string::npos;
+    if (hex) {
+        for (size_t i = 0; i < opt.key.size(); i += 2)
+            cfg.auth.key.push_back(static_cast<uint8_t>(
+                std::stoul(opt.key.substr(i, 2), nullptr, 16)));
+    } else {
+        cfg.auth.key.assign(opt.key.begin(), opt.key.end());
+    }
     return cfg;
 }
 
@@ -276,7 +286,7 @@ void print_usage(std::ostream& os) {
         "      --color/--no-color  Force / disable ANSI colours\n"
         "  -v, --verbose           Increase verbosity (repeatable; -vv hexdump)\n"
         "      --auth <md5|sha1>   Symmetric-key auth; use with --key/--key-id\n"
-        "      --key <secret>      Authentication key (ASCII)\n"
+        "      --key <secret>      Authentication key (ASCII; hex if > 20 chars)\n"
         "      --key-id <n>        Authentication key identifier\n"
         "  -h, --help              Show help\n"
         "\n"

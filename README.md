@@ -109,7 +109,7 @@ ntptool <host>                 # shorthand for: ntptool query <host>
 | `--color` / `--no-color` | Force / disable ANSI colours (auto-detects a TTY) |
 | `-v, --verbose` | More detail; repeat (`-v -v`) for a raw hexdump |
 | `--auth <md5\|sha1>` | Symmetric-key auth (with `--key` / `--key-id`) |
-| `--key <secret>` | Authentication key (ASCII) |
+| `--key <secret>` | Authentication key: ASCII, or hex when longer than 20 characters (as in ntpd's `ntp.keys`) |
 | `--key-id <n>` | Authentication key identifier |
 | `-h, --help` | Help (`ntptool help <command>` for details) |
 

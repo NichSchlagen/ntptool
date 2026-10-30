@@ -127,6 +127,17 @@ int cmd_selftest(const Options& opt) {
               p.has_mac && p.mac.size() == 16 && p.key_id == 0xAAAAAAAAu, c);
     }
 
+    // --- Key decoding follows ntpd: > 20 chars = hex -----------------------
+    {
+        Options o;
+        o.key = "0102030405060708090a0b0c0d0e0f1011121314";
+        auto k = make_query_config(o).auth.key;
+        check("40-char hex key decodes to 20 bytes",
+              k.size() == 20 && k[0] == 0x01 && k[19] == 0x14, c);
+        o.key = "s3cr3t";
+        check("short key stays ASCII", make_query_config(o).auth.key.size() == 6, c);
+    }
+
     // --- CSV rows match the header column count ---------------------------
     {
         auto cols = [](const std::string& s) {
