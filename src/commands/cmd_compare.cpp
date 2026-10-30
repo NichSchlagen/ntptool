@@ -94,6 +94,11 @@ int cmd_compare(const Options& opt) {
         rows.push_back(hs);
     }
 
+    // Like query: exit 1 when any server gave no usable response.
+    const int rc = std::all_of(rows.begin(), rows.end(),
+                               [](const HostSummary& r) { return r.reachable; })
+                       ? 0 : 1;
+
     // Consensus: group median of reachable per-host offsets.
     std::vector<double> offs;
     for (const auto& r : rows)
@@ -134,7 +139,7 @@ int cmd_compare(const Options& opt) {
             std::cout << "," << r.loss << "," << r.samples << ","
                       << (r.outlier ? 1 : 0) << "," << csv_escape(r.note) << "\n";
         }
-        return 0;
+        return rc;
     }
 
     if (opt.format == OutputFormat::Json) {
@@ -159,7 +164,7 @@ int cmd_compare(const Options& opt) {
             std::cout << js.str() << (i + 1 < rows.size() ? ",\n" : "\n");
         }
         std::cout << "  ]\n}\n";
-        return 0;
+        return rc;
     }
 
     // Text table.
@@ -195,7 +200,7 @@ int cmd_compare(const Options& opt) {
         }
     }
     std::cout << "\n";
-    return 0;
+    return rc;
 }
 
 }  // namespace ntptool
