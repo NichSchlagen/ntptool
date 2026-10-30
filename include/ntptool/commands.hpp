@@ -22,4 +22,7 @@ int cmd_selftest(const Options& opt);
 bool interrupted();
 void install_signal_handler();
 
+// Sleep for `s` seconds, returning early once interrupted() is set.
+void sleep_seconds(double s);
+
 }  // namespace ntptool

@@ -1,7 +1,5 @@
-#include <chrono>
 #include <iostream>
 #include <sstream>
-#include <thread>
 #include <vector>
 
 #include "ntptool/commands.hpp"
@@ -11,10 +9,6 @@
 
 namespace ntptool {
 namespace {
-
-void sleep_seconds(double s) {
-    if (s > 0) std::this_thread::sleep_for(std::chrono::duration<double>(s));
-}
 
 std::string ms3(double seconds) {
     char buf[32];

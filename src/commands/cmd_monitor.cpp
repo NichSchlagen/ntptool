@@ -1,9 +1,7 @@
-#include <chrono>
 #include <cstdio>
 #include <ctime>
 #include <iostream>
 #include <sstream>
-#include <thread>
 
 #include "ntptool/commands.hpp"
 #include "ntptool/output.hpp"
@@ -30,16 +28,6 @@ std::string ms3(double s) {
     char b[32];
     std::snprintf(b, sizeof(b), "%.3f", s * 1e3);
     return b;
-}
-
-void sleep_seconds(double s) {
-    // Sleep in small slices so Ctrl-C is honoured promptly.
-    double remaining = s;
-    while (remaining > 0 && !interrupted()) {
-        double slice = remaining > 0.2 ? 0.2 : remaining;
-        std::this_thread::sleep_for(std::chrono::duration<double>(slice));
-        remaining -= slice;
-    }
 }
 
 }  // namespace

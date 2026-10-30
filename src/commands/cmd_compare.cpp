@@ -1,10 +1,8 @@
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
-#include <thread>
 #include <vector>
 
 #include "ntptool/commands.hpp"
@@ -29,10 +27,6 @@ struct HostSummary {
     bool outlier = false;
     std::string note;
 };
-
-void sleep_seconds(double s) {
-    if (s > 0) std::this_thread::sleep_for(std::chrono::duration<double>(s));
-}
 
 double median_of(std::vector<double> v) {
     if (v.empty()) return 0.0;

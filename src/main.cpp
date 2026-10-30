@@ -1,7 +1,9 @@
 #include <atomic>
+#include <chrono>
 #include <csignal>
 #include <cstdio>
 #include <iostream>
+#include <thread>
 
 #include "ntptool/cli.hpp"
 #include "ntptool/commands.hpp"
@@ -15,6 +17,16 @@ void on_signal(int) { g_interrupted.store(true); }
 }  // namespace
 
 bool interrupted() { return g_interrupted.load(); }
+
+void sleep_seconds(double s) {
+    // Sleep in small slices so Ctrl-C is honoured promptly.
+    double remaining = s;
+    while (remaining > 0 && !interrupted()) {
+        double slice = remaining > 0.2 ? 0.2 : remaining;
+        std::this_thread::sleep_for(std::chrono::duration<double>(slice));
+        remaining -= slice;
+    }
+}
 
 void install_signal_handler() {
     std::signal(SIGINT, on_signal);
