@@ -28,7 +28,7 @@ Command parse_command(const std::string& s, bool& ok) {
 bool to_int(const std::string& s, long& out) {
     try {
         size_t pos = 0;
-        out = std::stol(s, &pos, 0);
+        out = std::stol(s, &pos, 10);  // base 10: "0123" must not be octal
         return pos == s.size();
     } catch (...) {
         return false;
