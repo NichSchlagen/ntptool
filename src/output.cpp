@@ -210,7 +210,7 @@ std::string query_csv_row(const std::string& host, const QueryResult& r) {
            << r.precision_seconds << ","
            << (r.time_valid ? offset_quality(r.offset) : "n/a") << ",";
     } else {
-        os << ",,,,,,,,,";
+        os << ",,,,,,,,,,";
     }
     os << csv_escape(r.error);
     return os.str();

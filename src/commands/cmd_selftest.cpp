@@ -127,6 +127,17 @@ int cmd_selftest(const Options& opt) {
               p.has_mac && p.mac.size() == 16 && p.key_id == 0xAAAAAAAAu, c);
     }
 
+    // --- CSV rows match the header column count ---------------------------
+    {
+        auto cols = [](const std::string& s) {
+            return std::count(s.begin(), s.end(), ',');
+        };
+        QueryResult failed;
+        failed.error = "timeout";
+        check("query CSV row for a failure has all header columns",
+              cols(query_csv_row("h", failed)) == cols(query_csv_header()), c);
+    }
+
     std::cout << "\n" << (g_fail == 0 ? c.green("All tests passed") : c.red("FAILURES"))
               << ": " << g_pass << " passed, " << g_fail << " failed.\n";
     return g_fail == 0 ? 0 : 1;
