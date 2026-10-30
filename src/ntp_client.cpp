@@ -191,21 +191,4 @@ QueryResult NtpClient::query(const Endpoint& server, const QueryConfig& cfg) {
     return r;
 }
 
-QueryResult NtpClient::query_host(const std::string& host, uint16_t port,
-                                  IpFamily family, const QueryConfig& cfg) {
-    QueryResult r;
-    std::string err;
-    auto eps = resolve(host, port, family, err);
-    if (eps.empty()) {
-        r.error = err;
-        return r;
-    }
-    // Query the first address; on hard socket failure try the next.
-    for (const auto& ep : eps) {
-        r = query(ep, cfg);
-        if (r.success || !r.error.empty()) return r;
-    }
-    return r;
-}
-
 }  // namespace ntptool

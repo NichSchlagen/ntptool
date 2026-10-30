@@ -80,10 +80,6 @@ class NtpClient {
 public:
     // Perform a single query against an already-resolved endpoint.
     QueryResult query(const Endpoint& server, const QueryConfig& cfg);
-
-    // Resolve `host` and query the first usable address.
-    QueryResult query_host(const std::string& host, uint16_t port,
-                           IpFamily family, const QueryConfig& cfg);
 };
 
 // Compute an NTP symmetric-key MAC over `header` (48 bytes) with the given key.
