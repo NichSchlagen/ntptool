@@ -74,7 +74,8 @@ int cmd_monitor(const Options& opt) {
         }
 
         if (csv) {
-            std::cout << ts << "," << seq << "," << (r.success ? 1 : 0) << ",";
+            std::cout << ts << "," << seq << ","
+                      << (r.success && r.time_valid ? 1 : 0) << ",";
             if (r.success && r.time_valid)
                 std::cout << static_cast<int>(r.response.stratum) << ","
                           << ms3(r.offset) << "," << ms3(r.delay) << ","
