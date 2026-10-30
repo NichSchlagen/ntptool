@@ -2,9 +2,12 @@ name: Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
-  # Allows a test build without a tag (builds only, publishes nothing).
+  # Builds and selftests on main and PRs too; only tags publish a release.
+  pull_request:
   workflow_dispatch:
 
 permissions:
