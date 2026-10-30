@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(ntptool
-    VERSION 1.0.0
+    VERSION 1.0.1
     DESCRIPTION "A comprehensive NTP server testing toolkit"
     LANGUAGES CXX)
 
