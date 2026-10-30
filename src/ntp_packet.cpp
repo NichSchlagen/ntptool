@@ -77,11 +77,20 @@ bool NtpPacket::parse(const uint8_t* data, size_t len, NtpPacket& out) {
     out.receive_ts.raw = get_u64(data + 32);
     out.transmit_ts.raw = get_u64(data + 40);
 
-    // Optional authenticator: key id (4 bytes) + MAC (16 or 20 bytes).
-    if (len >= 48 + 4 + 16) {
+    // Skip extension fields (RFC 7822: type, length >= 16, 4-byte aligned)
+    // while more than a MAC's worth of data remains; whatever is left must be
+    // exactly an authenticator: key id (4 bytes) + MD5 (16) or SHA-1 (20).
+    size_t pos = 48;
+    while (len - pos > 24) {
+        uint16_t flen = get_u16(data + pos + 2);
+        if (flen < 16 || flen % 4 != 0 || flen > len - pos) break;
+        pos += flen;
+    }
+    size_t rest = len - pos;
+    if (rest == 4 + 16 || rest == 4 + 20) {
         out.has_mac = true;
-        out.key_id = get_u32(data + 48);
-        out.mac.assign(data + 52, data + len);
+        out.key_id = get_u32(data + pos);
+        out.mac.assign(data + pos + 4, data + len);
     } else {
         out.has_mac = false;
         out.key_id = 0;

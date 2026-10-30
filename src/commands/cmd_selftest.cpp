@@ -7,6 +7,7 @@
 
 #include "ntptool/commands.hpp"
 #include "ntptool/md5.hpp"
+#include "ntptool/ntp_packet.hpp"
 #include "ntptool/ntp_time.hpp"
 #include "ntptool/sha1.hpp"
 
@@ -98,6 +99,32 @@ int cmd_selftest(const Options& opt) {
         bool eq = mac.size() == 16 &&
                   std::equal(mac.begin(), mac.end(), direct.begin());
         check("NTP MD5 MAC matches H(key||header)", eq, c);
+    }
+
+    // --- Packet authenticator vs. extension fields (RFC 7822) ---------------
+    {
+        auto parse_with = [](const std::vector<uint8_t>& trailer) {
+            std::vector<uint8_t> b(48, 0);
+            b.insert(b.end(), trailer.begin(), trailer.end());
+            NtpPacket p;
+            NtpPacket::parse(b.data(), b.size(), p);
+            return p;
+        };
+        std::vector<uint8_t> mac20(20, 0xAA);  // key id + MD5
+        std::vector<uint8_t> ext16(16, 0);     // one extension field
+        ext16[3] = 16;                         // length = 16
+
+        NtpPacket p = parse_with(mac20);
+        check("48+20 bytes parses as MD5 MAC", p.has_mac && p.mac.size() == 16, c);
+
+        p = parse_with(ext16);
+        check("48+16 extension field is not a MAC", !p.has_mac, c);
+
+        std::vector<uint8_t> both = ext16;
+        both.insert(both.end(), mac20.begin(), mac20.end());
+        p = parse_with(both);
+        check("extension field + MAC finds trailing MAC",
+              p.has_mac && p.mac.size() == 16 && p.key_id == 0xAAAAAAAAu, c);
     }
 
     std::cout << "\n" << (g_fail == 0 ? c.green("All tests passed") : c.red("FAILURES"))

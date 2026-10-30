@@ -171,10 +171,11 @@ QueryResult NtpClient::query(const Endpoint& server, const QueryConfig& cfg) {
         // ---- Authentication verification ----------------------------------
         if (r.auth_requested) {
             r.auth_present = resp.has_mac;
-            if (resp.has_mac && buf.size() >= 48 &&
-                resp.key_id == cfg.auth.key_id) {
+            if (resp.has_mac && resp.key_id == cfg.auth.key_id) {
+                // The MAC covers the header plus any extension fields.
+                size_t covered = buf.size() - 4 - resp.mac.size();
                 auto expect = compute_ntp_mac(cfg.auth.type, cfg.auth.key,
-                                              buf.data(), 48);
+                                              buf.data(), covered);
                 r.auth_valid = (expect.size() == resp.mac.size()) &&
                                std::equal(expect.begin(), expect.end(),
                                           resp.mac.begin());
