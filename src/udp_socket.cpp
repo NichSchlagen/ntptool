@@ -284,6 +284,11 @@ RecvStatus UdpSocket::recv_from(std::vector<uint8_t>& buf, Endpoint& from,
     if (n == SOCKET_ERROR) {
         int e = socket_last_error();
         if (e == WSAETIMEDOUT) return RecvStatus::Timeout;
+        // Windows surfaces an ICMP port-unreachable for an earlier send here.
+        if (e == WSAECONNRESET) {
+            err = "port unreachable (no NTP service on this host/port)";
+            return RecvStatus::Error;
+        }
         err = "recvfrom(): " + socket_error_string(e);
         return RecvStatus::Error;
     }
