@@ -48,7 +48,6 @@ std::string to_lower(std::string s);
 std::string trim(const std::string& s);
 std::vector<std::string> split(const std::string& s, char delim);
 bool iequals(const std::string& a, const std::string& b);
-bool starts_with(const std::string& s, const std::string& prefix);
 
 // JSON-escape a string (without surrounding quotes).
 std::string json_escape(const std::string& s);

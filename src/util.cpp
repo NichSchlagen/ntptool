@@ -41,10 +41,6 @@ bool iequals(const std::string& a, const std::string& b) {
     return true;
 }
 
-bool starts_with(const std::string& s, const std::string& prefix) {
-    return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
-}
-
 std::string json_escape(const std::string& s) {
     std::string out;
     out.reserve(s.size() + 8);

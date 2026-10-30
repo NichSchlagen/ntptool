@@ -114,9 +114,6 @@ QueryResult NtpClient::query(const Endpoint& server, const QueryConfig& cfg) {
 
         if (cfg.capture_raw) r.raw_response = buf;
         r.response = resp;
-        r.stratum = resp.stratum;
-        r.leap = resp.leap;
-        r.refid = resp.refid_string();
         r.root_delay = resp.root_delay_seconds();
         r.root_dispersion = resp.root_dispersion_seconds();
         r.root_distance = r.root_delay / 2.0 + r.root_dispersion;

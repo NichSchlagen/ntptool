@@ -35,7 +35,6 @@ struct ControlResponse {
 
     bool response_bit = false;
     bool error_bit = false;
-    bool more_bit = false;
     uint8_t opcode = 0;
     uint16_t status = 0;
     uint16_t assoc_id = 0;

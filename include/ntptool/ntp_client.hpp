@@ -57,11 +57,6 @@ struct QueryResult {
     double root_distance = 0.0;  // root_delay/2 + root_dispersion
     double precision_seconds = 0.0;
 
-    // Server metadata (mirrored from the response for convenience).
-    uint8_t stratum = 0;
-    LeapIndicator leap = LeapIndicator::NoWarning;
-    std::string refid;
-
     // Kiss-o'-Death.
     bool kiss_of_death = false;
     std::string kiss_code;

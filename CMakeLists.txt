@@ -9,7 +9,6 @@ project(ntptool
 # Options
 # ---------------------------------------------------------------------------
 option(NTPTOOL_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
-option(NTPTOOL_BUILD_TESTS        "Build the self-test suite"         ON)
 
 # ---------------------------------------------------------------------------
 # Global settings
@@ -67,7 +66,7 @@ target_link_libraries(ntptool PRIVATE Threads::Threads)
 # Platform specifics
 # ---------------------------------------------------------------------------
 if(WIN32)
-    target_link_libraries(ntptool PRIVATE ws2_32 iphlpapi)
+    target_link_libraries(ntptool PRIVATE ws2_32)
     target_compile_definitions(ntptool PRIVATE
         _WIN32_WINNT=0x0601        # Windows 7+
         WIN32_LEAN_AND_MEAN

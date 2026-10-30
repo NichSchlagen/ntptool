@@ -23,13 +23,8 @@ struct StatSummary {
 class Series {
 public:
     void add(double v) { data_.push_back(v); }
-    void reserve(size_t n) { data_.reserve(n); }
     size_t size() const { return data_.size(); }
     bool empty() const { return data_.empty(); }
-    void clear() { data_.clear(); }
-
-    double last() const { return data_.empty() ? 0.0 : data_.back(); }
-    const std::vector<double>& data() const { return data_; }
 
     StatSummary summary() const;
 

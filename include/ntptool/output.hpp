@@ -22,8 +22,6 @@ public:
     std::string red(const std::string& s) const { return paint("31", s); }
     std::string green(const std::string& s) const { return paint("32", s); }
     std::string yellow(const std::string& s) const { return paint("33", s); }
-    std::string blue(const std::string& s) const { return paint("34", s); }
-    std::string magenta(const std::string& s) const { return paint("35", s); }
     std::string cyan(const std::string& s) const { return paint("36", s); }
 };
 
