@@ -55,6 +55,9 @@ ControlResponse NtpControlClient::request(const Endpoint& server, uint8_t opcode
     // Payload is placed by (offset) so fragments can arrive out of order.
     std::vector<uint8_t> assembled;
     bool got_any = false;
+    bool seen_last = false;  // fragment without the "more" bit
+    size_t total = 0;        // payload length, known once seen_last
+    size_t received = 0;     // shortcut: assumes no duplicate fragments
 
     for (int frag = 0; frag < cfg.max_fragments; ++frag) {
         std::vector<uint8_t> buf;
@@ -111,8 +114,15 @@ ControlResponse NtpControlClient::request(const Endpoint& server, uint8_t opcode
         if (static_cast<size_t>(offset) + n > assembled.size())
             assembled.resize(static_cast<size_t>(offset) + n);
         std::memcpy(assembled.data() + offset, buf.data() + 12, n);
+        received += n;
 
-        if (!more_bit) break;  // last fragment
+        // The last fragment may arrive before earlier ones; stop only when
+        // every byte up to its end is in.
+        if (!more_bit) {
+            seen_last = true;
+            total = static_cast<size_t>(offset) + n;
+        }
+        if (seen_last && received >= total) break;
     }
 
     out.data = std::move(assembled);
