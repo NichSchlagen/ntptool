@@ -21,7 +21,7 @@ Command parse_command(const std::string& s, bool& ok) {
     if (l == "trace") return Command::Trace;
     if (l == "selftest" || l == "test") return Command::SelfTest;
     if (l == "help" || l == "--help" || l == "-h") return Command::Help;
-    if (l == "version" || l == "--version" || l == "-v") return Command::Version;
+    if (l == "version" || l == "--version") return Command::Version;
     ok = false;
     return Command::None;
 }
