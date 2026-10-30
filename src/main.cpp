@@ -1,6 +1,7 @@
 #include <atomic>
 #include <chrono>
 #include <csignal>
+#include <cstdlib>
 #include <cstdio>
 #include <iostream>
 #include <thread>
@@ -63,6 +64,12 @@ int main(int argc, char** argv) {
         return 3;
     }
     install_signal_handler();
+#if defined(_WIN32)
+    // Output contains UTF-8 (…, ←, —); restore the shared console's code page.
+    static const UINT old_cp = GetConsoleOutputCP();
+    SetConsoleOutputCP(CP_UTF8);
+    std::atexit([] { SetConsoleOutputCP(old_cp); });
+#endif
 
     Options opt;
     if (!parse_cli(argc, argv, opt)) {
