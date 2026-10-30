@@ -171,8 +171,15 @@ int cmd_security(const Options& opt) {
     }
 
     // ---- 2. Mode-7 monlist (CVE-2013-5211) --------------------------------
+    // A reply no larger than the request (e.g. an error packet) amplifies
+    // nothing, so only bigger replies count as a reflection vector.
     RawProbe monlist = raw_probe(ep, build_monlist_request(), opt.timeout);
-    if (monlist.responded) {
+    if (monlist.responded && monlist.amplification <= 1.0) {
+        findings.push_back({Sev::Info, "monlist",
+                            "server answers mode 7 but returns no list (" +
+                                std::to_string(monlist.response_bytes) +
+                                " bytes, likely an error reply)"});
+    } else if (monlist.responded) {
         std::ostringstream d;
         d.setf(std::ios::fixed);
         d << "server ANSWERED mode-7 monlist: " << monlist.packets
@@ -190,7 +197,12 @@ int cmd_security(const Options& opt) {
 
     // ---- 3. Mode-6 readvar reflection -------------------------------------
     RawProbe rv = raw_probe(ep, build_mode6_readvar_request(), opt.timeout);
-    if (rv.responded) {
+    if (rv.responded && rv.amplification <= 1.0) {
+        findings.push_back({Sev::Info, "mode6-readvar",
+                            "server answers mode 6 but returns no variables (" +
+                                std::to_string(rv.response_bytes) +
+                                " bytes, likely refused)"});
+    } else if (rv.responded) {
         // Try to extract the ntpd version string for the report.
         NtpControlClient ctl;
         ControlConfig ccfg;
