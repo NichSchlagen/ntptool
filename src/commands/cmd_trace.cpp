@@ -103,6 +103,9 @@ int cmd_trace(const Options& opt) {
         target = next;
     }
 
+    // Exit 1 when the starting server itself gave no usable response.
+    const int rc = (hops.empty() || !hops.front().reachable) ? 1 : 0;
+
     // ---- Output -----------------------------------------------------------
     if (opt.format == OutputFormat::Json) {
         std::cout << "{\n  \"start\": \"" << json_escape(start)
@@ -124,7 +127,7 @@ int cmd_trace(const Options& opt) {
             std::cout << js.str() << (i + 1 < hops.size() ? ",\n" : "\n");
         }
         std::cout << "  ]\n}\n";
-        return hops.empty() ? 1 : 0;
+        return rc;
     }
 
     std::cout << c.bold("Tracing NTP hierarchy from ") << start << "\n\n";
@@ -158,7 +161,7 @@ int cmd_trace(const Options& opt) {
     else
         std::cout << "\n" << c.yellow("Trace ended before reaching stratum 1.")
                   << "\n";
-    return 0;
+    return rc;
 }
 
 }  // namespace ntptool
