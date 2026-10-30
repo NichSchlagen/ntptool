@@ -1,5 +1,6 @@
 #include "ntptool/ntp_client.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 
@@ -43,26 +44,6 @@ QueryResult NtpClient::query(const Endpoint& server, const QueryConfig& cfg) {
     r.server = server;
     r.auth_requested = (cfg.auth.type != AuthType::None);
 
-    // ---- Build the request -------------------------------------------------
-    NtpPacket req;
-    req.leap = LeapIndicator::Unsynchronized;  // clients advertise "unsynced"
-    req.version = cfg.version;
-    req.mode = NtpMode::Client;
-    req.stratum = 0;
-    req.poll = 6;
-    req.precision = -20;
-    NtpTime xmit = ntp_now();
-    req.transmit_ts = xmit;  // this becomes T1 and the anti-spoof cookie
-
-    std::vector<uint8_t> wire = req.serialize();  // 48 bytes
-    if (cfg.auth.type != AuthType::None) {
-        auto mac = compute_ntp_mac(cfg.auth.type, cfg.auth.key, wire.data(),
-                                   wire.size());
-        put_u32(wire, cfg.auth.key_id);
-        wire.insert(wire.end(), mac.begin(), mac.end());
-    }
-    if (cfg.capture_raw) r.raw_request = wire;
-
     // ---- Socket ------------------------------------------------------------
     UdpSocket sock;
     std::string err;
@@ -72,8 +53,33 @@ QueryResult NtpClient::query(const Endpoint& server, const QueryConfig& cfg) {
         return r;
     }
 
+    NtpTime xmit;
+    std::vector<uint64_t> earlier;  // transmit timestamps of previous attempts
     int attempts = cfg.retries + 1;
     for (int attempt = 0; attempt < attempts; ++attempt) {
+        if (attempt > 0) earlier.push_back(xmit.raw);
+        // ---- Build the request ---------------------------------------------
+        // Fresh per attempt: the transmit timestamp is T1, so reusing it on a
+        // retry would add the whole timeout to the measured delay.
+        NtpPacket req;
+        req.leap = LeapIndicator::Unsynchronized;  // clients advertise "unsynced"
+        req.version = cfg.version;
+        req.mode = NtpMode::Client;
+        req.stratum = 0;
+        req.poll = 6;
+        req.precision = -20;
+        xmit = ntp_now();
+        req.transmit_ts = xmit;  // this becomes T1 and the anti-spoof cookie
+
+        std::vector<uint8_t> wire = req.serialize();  // 48 bytes
+        if (cfg.auth.type != AuthType::None) {
+            auto mac = compute_ntp_mac(cfg.auth.type, cfg.auth.key, wire.data(),
+                                       wire.size());
+            put_u32(wire, cfg.auth.key_id);
+            wire.insert(wire.end(), mac.begin(), mac.end());
+        }
+        if (cfg.capture_raw) r.raw_request = wire;
+
         if (!sock.send_to(server, wire.data(), wire.size(), err)) {
             r.error = err;
             return r;
@@ -81,7 +87,13 @@ QueryResult NtpClient::query(const Endpoint& server, const QueryConfig& cfg) {
 
         std::vector<uint8_t> buf;
         Endpoint from;
-        RecvStatus st = sock.recv_from(buf, from, err);
+        RecvStatus st;
+        // Drop late replies to earlier attempts; they would pair with this T1.
+        do {
+            st = sock.recv_from(buf, from, err);
+        } while (st == RecvStatus::Ok && buf.size() >= 48 &&
+                 std::find(earlier.begin(), earlier.end(),
+                           get_u64(buf.data() + 24)) != earlier.end());
         if (st == RecvStatus::Timeout) {
             r.error = "timeout after " + std::to_string(cfg.timeout.count()) + " ms";
             continue;  // retry
