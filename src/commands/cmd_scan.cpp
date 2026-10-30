@@ -200,9 +200,9 @@ int cmd_scan(const Options& opt) {
                       << "," << (r.reachable ? 1 : 0) << ",";
             if (r.reachable) {
                 char b[64];
-                std::snprintf(b, sizeof(b), "%d,%s,%.3f,%.3f", r.stratum,
-                              r.refid.c_str(), r.offset * 1e3, r.delay * 1e3);
-                std::cout << b;
+                std::snprintf(b, sizeof(b), ",%.3f,%.3f", r.offset * 1e3,
+                              r.delay * 1e3);
+                std::cout << r.stratum << "," << csv_escape(r.refid) << b;
             } else {
                 std::cout << ",,,";
             }
